@@ -7,7 +7,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   max-width: 80%;
   margin: 0 auto;
   padding: 4em 0 5em;
@@ -157,4 +157,17 @@
     font-size: 20px;
     margin-left: 2em;
   }
+}
+.topControls{
+  &__desactive{
+    background: none;
+    color: $primary;
+  }
+  button{
+    border-radius: 0;
+    border: 1px solid $primary;
+  }
+}
+.sign{
+  width: 55%;
 }
