@@ -9,6 +9,11 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@fullcalendar/common": "6.0.0-beta.1",
+    "@fullcalendar/daygrid": "6.0.0-beta.1",
+    "@fullcalendar/interaction": "6.0.0-beta.1",
+    "@fullcalendar/react": "6.0.0-beta.1",
+    "@fullcalendar/timegrid": "6.0.0-beta.1",
     "next": "12.2.3",
     "npm": "^8.15.1",
     "prop-types": "^15.8.1",

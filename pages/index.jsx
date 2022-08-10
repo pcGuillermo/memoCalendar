@@ -1,4 +1,8 @@
 import React, { useState } from 'react';
+import FullCalendar from '@fullcalendar/react';
+import interactionPlugin from '@fullcalendar/interaction';
+import timeGridPlugin from '@fullcalendar/timegrid';
+import dayGridPlugin from '@fullcalendar/daygrid';
 import Header from '../components/header';
 import Notification from '../components/notifications';
 import styles from '../styles/Home.module.scss';
@@ -20,6 +24,18 @@ export default function Home() {
         <div className={styles.sign}>
           {sign ? (<SignIn />) : (<SignUp />)}
         </div>
+        <FullCalendar
+          plugins={[interactionPlugin, dayGridPlugin, timeGridPlugin]}
+          initialView="dayGridMonth"
+          nowIndicator
+          locale="es"
+          footerToolbar
+          dayMaxEventRows
+          editable
+          initialEvents={[
+            { title: 'nice event', start: new Date() },
+          ]}
+        />
       </div>
       <Footer />
     </div>
