@@ -8,6 +8,7 @@ import Notification from '../components/notifications';
 import styles from '../styles/Calendar.module.scss';
 
 export default function Home() {
+  console.log(new Date());
   return (
     <div className={styles.container}>
       <Header home />
@@ -26,7 +27,7 @@ export default function Home() {
             }
           }
           initialEvents={[
-            { title: 'nice event', start: new Date(), backgroundColor: 'red' },
+            { title: 'nice event', start: '2022-08-11T05:49:42.746Z', backgroundColor: 'red' },
             { title: 'nice event', start: new Date(), backgroundColor: 'red' },
           ]}
         />
