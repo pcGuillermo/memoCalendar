@@ -1,5 +1,5 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/router';
 import ReactModal from 'react-modal';
@@ -13,6 +13,9 @@ import AuthContext from '../context/authContext';
 import { removeCookies } from './_app';
 import Header from '../components/header';
 import Notification from '../components/notifications';
+import NotificationsContext from '../context/notificationsContext';
+import PreLoadContext from '../context/preLoadContext';
+import { postEventService, getEventService, deleteEventService } from '../services/eventServices';
 import styles from '../styles/Calendar.module.scss';
 
 export async function getServerSideProps({ req }) {
@@ -29,7 +32,9 @@ export async function getServerSideProps({ req }) {
 }
 export default function Home() {
   const router = useRouter();
-  const { resetAuthData } = useContext(AuthContext);
+  const { resetAuthData, authData } = useContext(AuthContext);
+  const { addNotification, setNotifications } = useContext(NotificationsContext);
+  const { setPreLoad } = useContext(PreLoadContext);
   const [modal, setModal] = useState(false);
   const [fixEvent, setfixEvent] = useState(
     {
@@ -49,13 +54,31 @@ export default function Home() {
   );
   const [event, setEvent] = useState();
   const [seeEvent, setSeeEvent] = useState(false);
-  const [events] = useState([
-    {
-      title: 'nice event',
-      start: new Date(2022, 7, 18, 10, 20, 0),
-      end: new Date(2022, 7, 18, 21, 20, 0),
-    },
-  ]);
+  const [events, setEvents] = useState([]);
+  const getEvents = () => {
+    getEventService(authData.user.id, authData.token)
+      .then((response) => response.json())
+      .then((result) => {
+        setEvents(result);
+      })
+      .catch(() => {
+        setNotifications([{ type: 'error', title: '', text: 'Hubo un error.' }]);
+        setPreLoad(false);
+      });
+  };
+  useEffect(() => {
+    getEvents();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const deleteEvents = () => {
+    // eslint-disable-next-line no-underscore-dangle
+    deleteEventService(event._def.extendedProps._id, authData.token)
+      .then((response) => response.json())
+      .then(() => {
+        getEvents();
+        addNotification('confirmation', '', 'Evento eliminado', '5');
+      });
+  };
   const logout = () => {
     resetAuthData();
     removeCookies('token');
@@ -66,7 +89,52 @@ export default function Home() {
     prevState[field] = e.target.value;
     setfixEvent(prevState);
   };
-
+  const editEvent = (e) => {
+    e.preventDefault();
+  };
+  const createEvent = (e) => {
+    e.preventDefault();
+    const dateEvent = {
+      title: fixEvent.title,
+      user: authData.user.id,
+      backgroundColor: 'blue',
+      start: new Date(
+        fixEvent.startYear,
+        fixEvent.startMonth,
+        fixEvent.startDay,
+        fixEvent.startHours,
+        fixEvent.startMinutes,
+        0,
+      ),
+      end: new Date(
+        fixEvent.endYear,
+        fixEvent.endMonth,
+        fixEvent.endDay,
+        fixEvent.endHours,
+        fixEvent.endMinutes,
+        0,
+      ),
+    };
+    setPreLoad(true);
+    postEventService(dateEvent, authData.token)
+      .then((response) => {
+        if (response.status === 201) {
+          return response;
+        }
+        throw new Error(response);
+      })
+      .then((response) => response.json())
+      .then(() => {
+        addNotification('confirmation', '', 'Evento creado', '5');
+        setPreLoad(false);
+        setModal(false);
+        getEvents();
+      })
+      .catch(() => {
+        setNotifications([{ type: 'error', title: '', text: 'Hubo un error al crear el evento.' }]);
+        setPreLoad(false);
+      });
+  };
   return (
     <div className={styles.container}>
       <Header />
@@ -119,40 +187,40 @@ export default function Home() {
                 <button className={styles.modal__controls_edit} type="button" onClick={() => setSeeEvent(false)}>
                   <Image src="/images/edit.svg" alt="edit" width={24} height={24} />
                 </button>
-                <button className={styles.modal__controls_delete} type="button">
+                <button className={styles.modal__controls_delete} type="button" onClick={() => deleteEvents()}>
                   <Image src="/images/delete.svg" alt="delete" width={24} height={24} />
                 </button>
               </div>
 
             </div>
           ) : (
-            <form>
+            <form onSubmit={event !== undefined ? editEvent : createEvent}>
               <p>Datos del evento</p>
               <label htmlFor="title">Titulo</label>
-              <input type="text" name="title" id="title" defaultValue={event !== undefined ? event.title : fixEvent.title} />
+              <input type="text" name="title" id="title" defaultValue={event !== undefined ? event.title : fixEvent.title} onChange={(e) => changeInput(e, 'title')} />
               <p>Inicio</p>
               <label htmlFor="startDate">Fecha</label>
               <div className={styles.modal__date}>
-                <input type="text" name="startYear" id="startYear" defaultValue={event !== undefined ? event.start.getFullYear() : fixEvent.title} onChange={(e) => changeInput(e, 'startYear')} />
-                <input type="text" name="startMonth" id="startMonth" defaultValue={event !== undefined ? event.start.getMonth() : fixEvent.title} onChange={(e) => changeInput(e, 'startMonth')} />
-                <input type="text" name="startDay" id="startDay" defaultValue={event !== undefined ? event.start.getDay() : fixEvent.title} onChange={(e) => changeInput(e, 'startDay')} />
+                <input type="text" name="startYear" id="startYear" defaultValue={event !== undefined ? event.start.getFullYear() : fixEvent.startYear} onChange={(e) => changeInput(e, 'startYear')} />
+                <input type="text" name="startMonth" id="startMonth" defaultValue={event !== undefined ? event.start.getMonth() : fixEvent.startMonth} onChange={(e) => changeInput(e, 'startMonth')} />
+                <input type="text" name="startDay" id="startDay" defaultValue={event !== undefined ? event.start.getDay() : fixEvent.startDay} onChange={(e) => changeInput(e, 'startDay')} />
               </div>
               <label htmlFor="startHours">Hora</label>
               <div className={styles.modal__hours}>
-                <input type="text" name="startHours" id="startHours" defaultValue={event !== undefined ? event.start.getHours() : fixEvent.title} onChange={(e) => changeInput(e, 'startHours')} />
-                <input type="text" name="startMinutes" id="startMinutes" defaultValue={event !== undefined ? event.start.getMinutes() : fixEvent.title} onChange={(e) => changeInput(e, 'startMinutes')} />
+                <input type="text" name="startHours" id="startHours" defaultValue={event !== undefined ? event.start.getHours() : fixEvent.startHours} onChange={(e) => changeInput(e, 'startHours')} />
+                <input type="text" name="startMinutes" id="startMinutes" defaultValue={event !== undefined ? event.start.getMinutes() : fixEvent.startMinutes} onChange={(e) => changeInput(e, 'startMinutes')} />
               </div>
               <p>Fin</p>
               <label htmlFor="endDate">Fecha</label>
               <div className={styles.modal__date}>
-                <input type="text" name="endYear" id="endYear" defaultValue={event !== undefined ? event.end.getFullYear() : fixEvent.title} onChange={(e) => changeInput(e, 'endYear')} />
-                <input type="text" name="endMonth" id="endMonth" defaultValue={event !== undefined ? event.end.getMonth() : fixEvent.title} onChange={(e) => changeInput(e, 'endMonth')} />
-                <input type="text" name="endDay" id="endDay" defaultValue={event !== undefined ? event.end.getDay() : fixEvent.title} onChange={(e) => changeInput(e, 'endDay')} />
+                <input type="text" name="endYear" id="endYear" defaultValue={event !== undefined ? event.end.getFullYear() : fixEvent.endYear} onChange={(e) => changeInput(e, 'endYear')} />
+                <input type="text" name="endMonth" id="endMonth" defaultValue={event !== undefined ? event.end.getMonth() : fixEvent.endMonth} onChange={(e) => changeInput(e, 'endMonth')} />
+                <input type="text" name="endDay" id="endDay" defaultValue={event !== undefined ? event.end.getDay() : fixEvent.endDay} onChange={(e) => changeInput(e, 'endDay')} />
               </div>
               <label htmlFor="endHours">Hora</label>
               <div className={styles.modal__hours}>
-                <input type="text" name="endHours" id="endHours" defaultValue={event !== undefined ? event.end.getHours() : fixEvent.title} onChange={(e) => changeInput(e, 'endHours')} />
-                <input type="text" name="endMinutes" id="endMinutes" defaultValue={event !== undefined ? event.end.getMinutes() : fixEvent.title} onChange={(e) => changeInput(e, 'endMinutes')} />
+                <input type="text" name="endHours" id="endHours" defaultValue={event !== undefined ? event.end.getHours() : fixEvent.endHours} onChange={(e) => changeInput(e, 'endHours')} />
+                <input type="text" name="endMinutes" id="endMinutes" defaultValue={event !== undefined ? event.end.getMinutes() : fixEvent.endMinutes} onChange={(e) => changeInput(e, 'endMinutes')} />
               </div>
               <button className={styles.modal__submit} type="submit">Guardar</button>
             </form>
