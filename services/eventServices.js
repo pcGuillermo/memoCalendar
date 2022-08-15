@@ -6,7 +6,6 @@ export function postEventService({
   const myHeaders = new Headers();
   myHeaders.append('Content-Type', 'application/json');
   myHeaders.append('x-access-token', token);
-
   const body = {
     title,
     user,
@@ -20,6 +19,26 @@ export function postEventService({
     body: JSON.stringify(body),
   };
   return fetch(`${endpoint}/product`, reqOption);
+}
+export function putEventService({
+  title, user, backgroundColor, start, end,
+}, productId, token) {
+  const myHeaders = new Headers();
+  myHeaders.append('Content-Type', 'application/json');
+  myHeaders.append('x-access-token', token);
+  const body = {
+    title,
+    user,
+    backgroundColor,
+    start,
+    end,
+  };
+  const reqOption = {
+    method: 'PUT',
+    headers: myHeaders,
+    body: JSON.stringify(body),
+  };
+  return fetch(`${endpoint}/product/${productId}`, reqOption);
 }
 export function getEventService(userId, token) {
   const myHeaders = new Headers();

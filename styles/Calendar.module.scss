@@ -48,6 +48,7 @@
   overflow-y: auto;
   padding: 2em 1em;
   max-width: 600px;
+  min-width: 400px;
   
   &__submit{
     width: 100%;
@@ -75,23 +76,17 @@
     padding: 0;
     color: $textBlack;
   }
-  &__hours,
-  &__date{
+  &__dates{
     display: flex;
     align-items: center;
     justify-content: space-between;
-  }
-  &__date{
-    input{
-      width: calc(33% - 0.5em);
-      text-align: center;
-    }
-  }
-  &__hours{
-    input{
+    // width: 100%;
+    &_date{
+      display: flex;
+      align-items: center;
+      flex-direction: column;
       width: calc(50% - 0.5em);
-      text-align: center;
-    } 
+    }
   }
   @media (max-width: $phone) {
     width: 90%;
