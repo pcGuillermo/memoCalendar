@@ -2,21 +2,24 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 import React, { useState, useContext } from 'react';
 import { useRouter } from 'next/router';
+import AuthContext from '../context/authContext';
 import NotificationsContext from '../context/notificationsContext';
 import PreLoadContext from '../context/preLoadContext';
+import { postSigninService } from '../services/loginServices';
 import styles from '../styles/Home.module.scss';
 
 export default function SignIn() {
   const router = useRouter();
+  const { setAuthData } = useContext(AuthContext);
   const { addNotification, setNotifications } = useContext(NotificationsContext);
   const { setPreLoad } = useContext(PreLoadContext);
   const [user, setUser] = useState({
     email: '',
     password: '',
   });
-  /*   const createCookie = (name, value) => {
+  const createCookie = (name, value) => {
     document.cookie = `${name}=${value}; path=/; SameSite=None; Secure`;
-  }; */
+  };
   const changeInput = (event, field) => {
     const prevState = user;
     prevState[field] = event.target.value;
@@ -32,9 +35,35 @@ export default function SignIn() {
       addNotification('warning', '', 'Ingrese un correo válido.', '7');
     } else {
       setPreLoad(true);
-      addNotification('confirmation', '', 'Bienvenido!', '5');
-      router.push('./calendar');
-      setPreLoad(false);
+
+      postSigninService(user)
+        .then((response) => {
+          if (response.status === 200 || response.status === 400 || response.status === 401) {
+            return response;
+          }
+          throw new Error(response);
+        })
+        .then((response) => response.json())
+        .then((result) => {
+          if (result.message === 'User no found') {
+            addNotification('warning', '', 'Usuario no encontrado', '5');
+            setPreLoad(false);
+          } else if (result.message === 'Invalid password') {
+            addNotification('warning', '', 'Contraseña invalida', '5');
+            setPreLoad(false);
+          } else {
+            localStorage.setItem('auth', JSON.stringify(result));
+            setAuthData(result);
+            createCookie('token', result.token);
+            addNotification('confirmation', '', 'Bienvenido!', '5');
+            router.push('./calendar');
+            setPreLoad(false);
+          }
+        })
+        .catch(() => {
+          setNotifications([{ type: 'error', title: '', text: 'Hubo un error al iniciar sesión.' }]);
+          setPreLoad(false);
+        });
     }
   };
   return (

@@ -3,10 +3,13 @@ import React, { useContext, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import Link from 'next/link';
 import PreLoad from './preLoad';
+import AuthContext from '../context/authContext';
 import NotificationsContext from '../context/notificationsContext';
 import styles from '../styles/Header.module.scss';
 
 export default function Header({ home }) {
+  const { authData } = useContext(AuthContext);
+
   const { notifications, setNotifications } = useContext(NotificationsContext);
   // remove temporary notifications when header is rendered
   useEffect(() => {
@@ -32,8 +35,8 @@ export default function Header({ home }) {
         </Link>
         {!home ? (
           <div className={styles.header__container_user}>
-            <p className={styles.header__container_name}>Hector Guillermo Angeles Maicas</p>
-            <p><span>memoangeles180@gmail.com</span></p>
+            <p className={styles.header__container_name}>{authData.user.username}</p>
+            <p><span>{authData.user.email}</span></p>
           </div>
         ) : null}
       </div>
